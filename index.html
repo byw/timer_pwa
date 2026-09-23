@@ -26,6 +26,8 @@
   #track { stroke: #1a1a1a; }
   #ring { stroke: #777; }
   .running #ring { stroke: #7ee08a; }
+  #ring { transition: stroke 0.6s; }
+  .flash #ring { stroke: #fff; transition: none; }
   #bar {
     position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; gap: 24px;
     padding: 12px 0 max(12px, env(safe-area-inset-bottom));
@@ -134,6 +136,7 @@ $('done').addEventListener('click', () => {
 $('update').addEventListener('click', async () => {
   for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
   for (const k of await caches.keys()) await caches.delete(k);
+  sessionStorage.setItem('reloaded', '1');
   location.reload();
 });
 
@@ -159,6 +162,13 @@ async function wake() { if (lock && !lock.released) return; try { lock = await n
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { wake(); draw(); } });
 wake();
 draw();
+
+// After "Reload from server": ring flashes white once, then fades to normal.
+if (sessionStorage.getItem('reloaded')) {
+  sessionStorage.removeItem('reloaded');
+  document.body.classList.add('flash');
+  setTimeout(() => document.body.classList.remove('flash'), 400);
+}
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>

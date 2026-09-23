@@ -99,15 +99,20 @@ function draw() {
 function finish() {
   s = save({ ...s, endAt: null, remaining: 0 });
   if (s.chime) chime();
-  if (s.vibrate && navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  if (s.vibrate) { navigator.vibrate?.([200, 100, 200]); hap.click(); }
 }
 
 function set(next) { s = save(next); cancelAnimationFrame(raf); draw(); }
 
-$('main').addEventListener('pointerdown', () => { audio(); set(toggle(s, Date.now())); });
-$('reset').addEventListener('pointerdown', e => { e.stopPropagation(); set(reset(s)); });
+// Haptic tap. Android: vibrate. iOS: no API, but toggling a native switch fires system haptic (unofficial, 17.4+).
+const hap = Object.assign(document.createElement('input'), { type: 'checkbox', hidden: true });
+hap.setAttribute('switch', ''); document.body.append(hap);
+function tap() { navigator.vibrate?.(10); hap.click(); }
+
+$('main').addEventListener('pointerdown', () => { tap(); audio(); set(toggle(s, Date.now())); });
+$('reset').addEventListener('pointerdown', e => { e.stopPropagation(); tap(); set(reset(s)); });
 $('open').addEventListener('pointerdown', e => {
-  e.stopPropagation();
+  e.stopPropagation(); tap();
   $('minutes').value = Math.round(s.duration / 60000);
   $('chime').checked = s.chime;
   $('vibrate').checked = s.vibrate;
@@ -115,6 +120,7 @@ $('open').addEventListener('pointerdown', e => {
 });
 $('minutes').addEventListener('focus', e => e.target.select());
 $('done').addEventListener('click', () => {
+  tap();
   const min = Math.max(1, Math.min(999, Number($('minutes').value) || 1));
   const next = { ...s, chime: $('chime').checked, vibrate: $('vibrate').checked };
   set(min * 60000 === s.duration ? next : reset(next, min * 60000));

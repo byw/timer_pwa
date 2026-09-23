@@ -1,6 +1,6 @@
 // Pure timer state. Wall-clock based: when running, remaining = endAt - now.
 const KEY = 'timer';
-const DEFAULT = { duration: 600000, endAt: null, remaining: 600000, chime: true, vibrate: true };
+const DEFAULT = { duration: 1800000, endAt: null, remaining: 1800000, chime: true, vibrate: true };
 
 export function load(storage = globalThis.localStorage) {
   try {

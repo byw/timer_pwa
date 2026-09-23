@@ -44,7 +44,8 @@
                        padding: 8px 12px; width: 90px; font-size: 18px; text-align: right; }
   input[type=number] { appearance: textfield; -moz-appearance: textfield; }
   input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-  input[type=checkbox] { width: 22px; height: 22px; accent-color: #fff; }
+  input[type=checkbox] { width: 22px; height: 22px; accent-color: #7ee08a; }
+  input[type=checkbox][switch] { width: auto; height: auto; }
   #done, #update { color: #fff; width: auto; padding: 0 24px; border: 1px solid #333; border-radius: 22px; justify-self: center; }
   #update { color: #555; border-color: #222; margin-top: 40px; }
 </style>
@@ -69,8 +70,8 @@
 
 <div id="settings" hidden>
   <label>Minutes <input id="minutes" type="number" inputmode="numeric" min="1" max="999"></label>
-  <label>Chime <input id="chime" type="checkbox"></label>
-  <label>Vibrate <input id="vibrate" type="checkbox"></label>
+  <label>Chime <input id="chime" type="checkbox" switch></label>
+  <label>Vibrate <input id="vibrate" type="checkbox" switch></label>
   <button id="done">Done</button>
   <button id="update">Reload from server</button>
 </div>

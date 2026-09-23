@@ -1,4 +1,4 @@
-const CACHE = 'timer-v7';
+const CACHE = 'timer-v8';
 const FILES = ['./', 'index.html', 'timer.js', 'manifest.json', 'icon.svg'];
 
 self.addEventListener('install', e => {

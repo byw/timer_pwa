@@ -113,7 +113,7 @@ function tap() { navigator.vibrate?.(10); hap.click(); }
 $('main').addEventListener('click', tap);
 $('bar').addEventListener('click', e => { e.stopPropagation(); tap(); });
 
-$('main').addEventListener('pointerdown', () => { audio(); set(toggle(s, Date.now())); });
+$('main').addEventListener('pointerdown', () => { wake(); audio(); set(toggle(s, Date.now())); });
 $('reset').addEventListener('pointerdown', e => { e.stopPropagation(); set(reset(s)); });
 $('open').addEventListener('pointerdown', e => {
   e.stopPropagation();
@@ -154,7 +154,8 @@ function chime() {
 }
 
 // Keep screen on while app open. Lock drops when hidden; re-request on return.
-async function wake() { try { await navigator.wakeLock?.request('screen'); } catch {} }
+let lock;
+async function wake() { if (lock && !lock.released) return; try { lock = await navigator.wakeLock?.request('screen'); } catch {} }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { wake(); draw(); } });
 wake();
 draw();

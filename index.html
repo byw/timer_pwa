@@ -45,7 +45,8 @@
   input[type=number] { appearance: textfield; -moz-appearance: textfield; }
   input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   input[type=checkbox] { width: 22px; height: 22px; accent-color: #fff; }
-  #done { color: #fff; width: auto; padding: 0 24px; border: 1px solid #333; border-radius: 22px; justify-self: center; }
+  #done, #update { color: #fff; width: auto; padding: 0 24px; border: 1px solid #333; border-radius: 22px; justify-self: center; }
+  #update { color: #555; border-color: #222; margin-top: 40px; }
 </style>
 </head>
 <body>
@@ -71,6 +72,7 @@
   <label>Chime <input id="chime" type="checkbox"></label>
   <label>Vibrate <input id="vibrate" type="checkbox"></label>
   <button id="done">Done</button>
+  <button id="update">Reload from server</button>
 </div>
 
 <script type="module">
@@ -114,6 +116,12 @@ $('done').addEventListener('click', () => {
   const min = Math.max(1, Math.min(999, Number($('minutes').value) || 1));
   set(reset({ ...s, chime: $('chime').checked, vibrate: $('vibrate').checked }, min * 60000));
   $('settings').hidden = true;
+});
+
+$('update').addEventListener('click', async () => {
+  for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+  for (const k of await caches.keys()) await caches.delete(k);
+  location.reload();
 });
 
 // Soft chime: Web Audio sine, ~1.5 s decay. Context created on first user gesture (iOS rule).

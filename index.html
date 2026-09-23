@@ -113,6 +113,7 @@ $('open').addEventListener('pointerdown', e => {
   $('vibrate').checked = s.vibrate;
   $('settings').hidden = false;
 });
+$('minutes').addEventListener('focus', e => e.target.select());
 $('done').addEventListener('click', () => {
   const min = Math.max(1, Math.min(999, Number($('minutes').value) || 1));
   const next = { ...s, chime: $('chime').checked, vibrate: $('vibrate').checked };

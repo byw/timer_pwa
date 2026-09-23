@@ -114,7 +114,8 @@ $('open').addEventListener('pointerdown', e => {
 });
 $('done').addEventListener('click', () => {
   const min = Math.max(1, Math.min(999, Number($('minutes').value) || 1));
-  set(reset({ ...s, chime: $('chime').checked, vibrate: $('vibrate').checked }, min * 60000));
+  const next = { ...s, chime: $('chime').checked, vibrate: $('vibrate').checked };
+  set(min * 60000 === s.duration ? next : reset(next, min * 60000));
   $('settings').hidden = true;
 });
 

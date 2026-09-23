@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>Timer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; background: #000; color: #fff; overflow: hidden; }
+  body {
+    font: 16px/1.4 -apple-system, system-ui, sans-serif;
+    touch-action: manipulation; user-select: none; -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #main { position: fixed; inset: 0; display: grid; place-items: center; cursor: pointer; }
+  svg { width: min(70vw, 70vh); height: min(70vw, 70vh); }
+  circle { fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round;
+           transform: rotate(-90deg); transform-origin: 50% 50%; }
+  #track { stroke: #1a1a1a; }
+  #bar {
+    position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; gap: 24px;
+    padding: 12px 0 max(12px, env(safe-area-inset-bottom));
+  }
+  button {
+    background: none; border: 0; color: #555; width: 44px; height: 44px; padding: 0;
+    display: grid; place-items: center; cursor: pointer; border-radius: 50%;
+  }
+  button:active { color: #fff; }
+  button svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.5; fill: none;
+               stroke-linecap: round; stroke-linejoin: round; }
+  #settings { position: fixed; inset: 0; background: #000; display: grid; place-content: center; gap: 28px; }
+  #settings[hidden] { display: none; }
+  label { display: flex; align-items: center; justify-content: space-between; gap: 24px; color: #aaa; min-width: 220px; }
+  input[type=number] { background: #111; color: #fff; border: 1px solid #333; border-radius: 8px;
+                       padding: 8px 12px; width: 90px; font-size: 18px; text-align: right; }
+  input[type=number] { appearance: textfield; -moz-appearance: textfield; }
+  input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=checkbox] { width: 22px; height: 22px; accent-color: #fff; }
+  #done { color: #fff; width: auto; padding: 0 24px; border: 1px solid #333; border-radius: 22px; justify-self: center; }
+</style>
+</head>
+<body>
+
+<div id="main">
+  <svg viewBox="0 0 100 100" aria-hidden="true">
+    <circle id="track" cx="50" cy="50" r="46"/>
+    <circle id="ring" cx="50" cy="50" r="46"/>
+  </svg>
+</div>
+
+<div id="bar">
+  <button id="reset" aria-label="Reset">
+    <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>
+  </button>
+  <button id="open" aria-label="Settings">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+</div>
+
+<div id="settings" hidden>
+  <label>Minutes <input id="minutes" type="number" inputmode="numeric" min="1" max="999"></label>
+  <label>Chime <input id="chime" type="checkbox"></label>
+  <label>Vibrate <input id="vibrate" type="checkbox"></label>
+  <button id="done">Done</button>
+</div>
+
+<script type="module">
+import { load, save, toggle, reset, remainingAt } from './timer.js';
+
+const $ = id => document.getElementById(id);
+const ring = $('ring');
+const C = 2 * Math.PI * 46;
+ring.style.strokeDasharray = C;
+
+let s = load();
+let raf = 0;
+
+function draw() {
+  const left = remainingAt(s, Date.now());
+  ring.style.strokeDashoffset = C * (1 - left / s.duration);
+  if (s.endAt != null) {
+    if (left <= 0) finish(); else raf = requestAnimationFrame(draw);
+  }
+}
+
+function finish() {
+  s = save({ ...s, endAt: null, remaining: 0 });
+  if (s.chime) chime();
+  if (s.vibrate && navigator.vibrate) navigator.vibrate([200, 100, 200]);
+}
+
+function set(next) { s = save(next); cancelAnimationFrame(raf); draw(); }
+
+$('main').addEventListener('pointerdown', () => { audio(); set(toggle(s, Date.now())); });
+$('reset').addEventListener('pointerdown', e => { e.stopPropagation(); set(reset(s)); });
+$('open').addEventListener('pointerdown', e => {
+  e.stopPropagation();
+  $('minutes').value = Math.round(s.duration / 60000);
+  $('chime').checked = s.chime;
+  $('vibrate').checked = s.vibrate;
+  $('settings').hidden = false;
+});
+$('done').addEventListener('click', () => {
+  const min = Math.max(1, Math.min(999, Number($('minutes').value) || 1));
+  set(reset({ ...s, chime: $('chime').checked, vibrate: $('vibrate').checked }, min * 60000));
+  $('settings').hidden = true;
+});
+
+// Soft chime: Web Audio sine, ~1.5 s decay. Context created on first user gesture (iOS rule).
+let ctx;
+function audio() { ctx ??= new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') ctx.resume(); }
+function chime() {
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  for (const [f, g] of [[528, 0.3], [1056, 0.08]]) {
+    const o = ctx.createOscillator(), a = ctx.createGain();
+    o.frequency.value = f;
+    a.gain.setValueAtTime(g, t);
+    a.gain.exponentialRampToValueAtTime(0.0001, t + 1.5);
+    o.connect(a).connect(ctx.destination);
+    o.start(t); o.stop(t + 1.5);
+  }
+}
+
+// Keep screen on while app open. Lock drops when hidden; re-request on return.
+async function wake() { try { await navigator.wakeLock?.request('screen'); } catch {} }
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { wake(); draw(); } });
+wake();
+draw();
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>

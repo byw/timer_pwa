@@ -116,7 +116,11 @@ $('main').addEventListener('click', tap);
 $('bar').addEventListener('click', e => { e.stopPropagation(); tap(); });
 
 $('main').addEventListener('pointerdown', () => { wake(); audio(); set(toggle(s, Date.now())); });
-$('reset').addEventListener('pointerdown', e => { e.stopPropagation(); set(reset(s)); });
+$('reset').addEventListener('pointerdown', e => {
+  e.stopPropagation();
+  // Skip prompt when already at full duration; nothing to lose.
+  if (remainingAt(s, Date.now()) === s.duration || confirm('Reset timer?')) set(reset(s));
+});
 $('open').addEventListener('pointerdown', e => {
   e.stopPropagation();
   $('minutes').value = Math.round(s.duration / 60000);

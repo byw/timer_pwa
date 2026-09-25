@@ -128,6 +128,9 @@ $('open').addEventListener('pointerdown', e => {
   $('vibrate').checked = s.vibrate;
   $('settings').hidden = false;
 });
+// Preview on toggle-on. change fires from the click, so audio and iOS haptic are allowed.
+$('chime').addEventListener('change', e => { if (e.target.checked) { audio(); chime(); } });
+$('vibrate').addEventListener('change', e => { if (e.target.checked) { navigator.vibrate?.([200, 100, 200]); hap.click(); } });
 $('minutes').addEventListener('focus', e => e.target.select());
 $('done').addEventListener('click', () => {
   tap();

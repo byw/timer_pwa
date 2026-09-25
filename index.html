@@ -107,15 +107,15 @@ function finish() {
 function set(next) { s = save(next); cancelAnimationFrame(raf); draw(); }
 
 // Haptic tap. Android: vibrate. iOS: no API, but toggling a native switch fires system haptic (unofficial, 17.4+).
-// Must run inside a click handler; iOS ignores it from pointerdown.
+// Must run inside a click handler; iOS ignores it from pointerdown. Same for wake lock: touch pointerdown isn't a user activation.
 const hap = Object.assign(document.createElement('input'), { type: 'checkbox' });
 hap.setAttribute('switch', ''); hap.style.cssText = 'position:fixed;left:-100px;top:-100px;opacity:0';
 document.body.append(hap);
-function tap() { navigator.vibrate?.(10); hap.click(); }
+function tap() { navigator.vibrate?.(10); hap.click(); wake(); }
 $('main').addEventListener('click', tap);
 $('bar').addEventListener('click', e => { e.stopPropagation(); tap(); });
 
-$('main').addEventListener('pointerdown', () => { wake(); audio(); set(toggle(s, Date.now())); });
+$('main').addEventListener('pointerdown', () => { audio(); set(toggle(s, Date.now())); });
 $('reset').addEventListener('pointerdown', e => {
   e.stopPropagation();
   // Skip prompt when already at full duration; nothing to lose.
